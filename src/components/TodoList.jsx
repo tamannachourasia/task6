@@ -127,7 +127,7 @@ const TodoList = () => {
                   value={newTask.priority}
                   onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
                 >
-                  <option>-Select-</option>
+                  <option value="">-Select-</option>
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
                   <option value="High">High</option>
