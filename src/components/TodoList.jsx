@@ -122,14 +122,15 @@ const TodoList = () => {
                   value={newTask.dueDate}
                   onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
                 />
-                <input
+                <select
                   className="my-4 text-zinc-900 mx-6 py-1 rounded-md px-2"
-                  type="text"
-                  required
                   value={newTask.priority}
                   onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
-                  placeholder="Task Priority"
-                />
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
                 <button onClick={addTask}>Add Task</button>
                 {tasks
                   .filter(task => task.listId === list.id)
