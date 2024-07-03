@@ -11,7 +11,7 @@ const TodoList = () => {
   const [tasks, setTasks] = useState([]);
   const [newListName, setNewListName] = useState("");
   const [newTask, setNewTask] = useState({ title: "", description: "", dueDate: "", priority: "", listId: "" });
-  
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
@@ -81,8 +81,9 @@ const TodoList = () => {
   };
 
   return (
-    <div>
-      <h2 className="mt-10 text-2xl">To-Do Lists</h2>
+    <div className="flex justify-center">
+      <div className="bg-zinc-800 p-4 rounded-lg">
+      <h2 className="text-2xl mb-4">To-Do Lists</h2>
       <input
         className="my-4 text-zinc-900 mx-6 py-1 rounded-md px-2"
         type="text"
@@ -94,13 +95,14 @@ const TodoList = () => {
       <button onClick={logOut}>Logout</button>
 
       <DragDropContext onDragEnd={onDragEnd}>
+      <div className="flex">
         {lists.map(list => (
           <Droppable key={list.id} droppableId={list.id}>
             {(provided) => (
-              <div className="w-[55vw] bg-zinc-800" ref={provided.innerRef} {...provided.droppableProps}>
-                <h3 className="pl-10 text-xl">{list.name}</h3>
+              <div className="bg-zinc-600 p-4 rounded-lg m-2" ref={provided.innerRef} {...provided.droppableProps}>
+                <h3 className="text-xl mb-2">{list.name}</h3>
                 <input
-                  className="my-4 text-zinc-900 mx-6 py-1 rounded-md px-2"
+                  className="my-2 text-zinc-900 py-1 rounded-md px-2"
                   type="text"
                   required
                   value={newTask.title}
@@ -108,7 +110,7 @@ const TodoList = () => {
                   placeholder="Task Title"
                 />
                 <input
-                  className="my-4 text-zinc-900 mx-6 py-1 rounded-md px-2"
+                  className="my-2 text-zinc-900 py-1 rounded-md px-2"
                   type="text"
                   required
                   value={newTask.description}
@@ -116,14 +118,14 @@ const TodoList = () => {
                   placeholder="Task Description"
                 />
                 <input
-                  className="my-4 text-zinc-900 mx-6 py-1 rounded-md px-2"
+                  className="my-2 text-zinc-900 py-1 rounded-md px-2"
                   type="date"
                   required
                   value={newTask.dueDate}
                   onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
                 />
                 <select
-                  className="my-4 text-zinc-900 mx-6 py-1 rounded-md px-2"
+                  className="my-2 text-zinc-900 py-1 rounded-md px-2"
                   value={newTask.priority}
                   onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
                 >
@@ -132,21 +134,21 @@ const TodoList = () => {
                   <option value="Medium">Medium</option>
                   <option value="High">High</option>
                 </select>
-                <button onClick={addTask}>Add Task</button>
+                <button onClick={addTask} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Add Task</button>
                 {tasks
                   .filter(task => task.listId === list.id)
                   .map((task, index) => (
                     <Draggable key={task.id} draggableId={task.id} index={index}>
                       {(provided) => (
-                        
-                        <div className=" flex items-center gap-1 flex-col mt-2 p-[2vh] ml-[30vh] bg-zinc-600 w-[20vw] rounded-md" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+
+                        <div className="bg-zinc-400 p-4 rounded-lg mt-2" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
                           <h4>{task.title}</h4>
                           <p>{task.description}</p>
                           <p>Due: {task.dueDate}</p>
                           <p>Priority: {task.priority}</p>
-                          <button  onClick={() => deleteTask(task.id)}>Delete Task</button>
+                          <button onClick={() => deleteTask(task.id)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete Task</button>
                         </div>
-                       
+
                       )}
                     </Draggable>
                   ))}
@@ -155,7 +157,9 @@ const TodoList = () => {
             )}
           </Droppable>
         ))}
+        </div>
       </DragDropContext>
+      </div>
     </div>
   );
 };
