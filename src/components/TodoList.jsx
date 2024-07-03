@@ -46,6 +46,15 @@ const TodoList = () => {
     }
   };
 
+  const logOut = async () => {
+    try {
+      await auth.signOut();
+      // Optionally, redirect or perform additional tasks after logout
+    } catch (error) {
+      console.error("Error logging out:", error.message);
+    }
+  };
+
   const addTask = async () => {
     if (newTask.title.trim() && newTask.listId) {
       await addDoc(collection(db, "tasks"), { ...newTask, userId: user.uid });
@@ -82,6 +91,7 @@ const TodoList = () => {
         placeholder="New List Name"
       />
       <button onClick={addList}>Add List</button>
+      <button onClick={logOut}>Logout</button>
 
       <DragDropContext onDragEnd={onDragEnd}>
         {lists.map(list => (
