@@ -1,5 +1,5 @@
 // src/components/TodoList.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useNavigate } from "react";
 import { db, auth } from "../firebase";
 import { collection, addDoc, deleteDoc, doc, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -11,6 +11,7 @@ const TodoList = () => {
   const [tasks, setTasks] = useState([]);
   const [newListName, setNewListName] = useState("");
   const [newTask, setNewTask] = useState({ title: "", description: "", dueDate: "", priority: "", listId: "" });
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -49,7 +50,7 @@ const TodoList = () => {
   const logOut = async () => {
     try {
       await auth.signOut();
-      // Optionally, redirect or perform additional tasks after logout
+      navigate("/");
     } catch (error) {
       console.error("Error logging out:", error.message);
     }
