@@ -4,6 +4,7 @@ import { db, auth } from "../firebase";
 import { collection, addDoc, deleteDoc, doc, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 const TodoList = () => {
   const [user, setUser] = useState(null);
@@ -11,7 +12,7 @@ const TodoList = () => {
   const [tasks, setTasks] = useState([]);
   const [newListName, setNewListName] = useState("");
   const [newTask, setNewTask] = useState({ title: "", description: "", dueDate: "", priority: "", listId: "" });
-
+  const navigate = useNavigate();
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
@@ -49,7 +50,8 @@ const TodoList = () => {
   const logOut = async () => {
     try {
       await auth.signOut();
-      setUser(null);
+      alert("You have been logged out");
+      navigate("/");
     } catch (error) {
       console.error("Error logging out:", error.message);
     }
@@ -92,7 +94,7 @@ const TodoList = () => {
         placeholder="New List Name"
       />
       <button onClick={addList}>Add List</button>
-      <button onClick={logOut}>Logout</button>
+      <button className="translate-x-8 bg-red-900" onClick={logOut}>Logout</button>
 
       <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex">
