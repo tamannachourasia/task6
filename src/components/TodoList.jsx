@@ -1,10 +1,12 @@
-// src/components/TodoList.jsx
 import React, { useState, useEffect } from "react";
 import { db, auth } from "../firebase";
 import { collection, addDoc, deleteDoc, doc, query, where, onSnapshot, updateDoc } from "firebase/firestore";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+
+
+const priorities = ["Low", "Medium", "High"];
 
 const TodoList = () => {
   const [user, setUser] = useState(null);
@@ -75,13 +77,35 @@ const TodoList = () => {
 
     if (!destination) return;
 
-    const updatedTasks = Array.from(tasks);
-    const [movedTask] = updatedTasks.splice(source.index, 1);
-    movedTask.listId = destination.droppableId;
-    updatedTasks.splice(destination.index, 0, movedTask);
+    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+      return;
+    }
+
+    const draggedTask = tasks.find(task => task.id === draggableId);
+    let updatedTasks = tasks;
+
+    if (destination.droppableId === 'Low' || destination.droppableId === 'Medium' || destination.droppableId === 'High') {
+      updatedTasks = tasks.map(task =>
+        task.id === draggableId ? { ...task, priority: destination.droppableId } : task
+      );
+      await updateDoc(doc(db, "tasks", draggableId), { priority: destination.droppableId });
+    } else {
+      const sourceTasks = tasks.filter(task => task.listId === source.droppableId);
+      const destinationTasks = tasks.filter(task => task.listId === destination.droppableId);
+
+      sourceTasks.splice(source.index, 1);
+      destinationTasks.splice(destination.index, 0, draggedTask);
+
+      draggedTask.listId = destination.droppableId;
+
+      updatedTasks = tasks.map(task =>
+        task.id === draggableId ? draggedTask : task
+      );
+
+      await updateDoc(doc(db, "tasks", draggableId), { listId: destination.droppableId });
+    }
 
     setTasks(updatedTasks);
-    await updateDoc(doc(db, "tasks", draggableId), { listId: destination.droppableId });
   };
 
   const handleNewTaskChange = (listId, field, value) => {
@@ -111,8 +135,12 @@ const TodoList = () => {
           <div className="flex">
             {lists.map(list => (
               <Droppable key={list.id} droppableId={list.id}>
-                {(provided) => (
-                  <div className="bg-zinc-600 p-4 rounded-lg m-2" ref={provided.innerRef} {...provided.droppableProps}>
+                {(provided, snapshot) => (
+                  <div
+                    className={`bg-zinc-600 p-4 rounded-lg m-2 droppable ${snapshot.isDraggingOver ? "is-dragging-over" : ""}`}
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                  >
                     <h3 className="text-xl mb-2">{list.name}</h3>
                     <input
                       className="my-2 text-zinc-900 py-1 rounded-md px-2"
@@ -145,12 +173,35 @@ const TodoList = () => {
                       <option value="High">High</option>
                     </select>
                     <button onClick={() => addTask(list.id)} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Add Task</button>
+                
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            ))}
+          </div>
+
+          <div className="flex mt-4">
+            {priorities.map(priority => (
+              <Droppable key={priority} droppableId={priority}>
+                {(provided, snapshot) => (
+                  <div
+                    className={`bg-gray-900 p-4 rounded-lg m-2 droppable ${snapshot.isDraggingOver ? "is-dragging-over" : ""}`}
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                  >
+                    <h3 className="text-xl mb-2">{priority} Priority</h3>
                     {tasks
-                      .filter(task => task.listId === list.id)
+                      .filter(task => task.priority === priority)
                       .map((task, index) => (
                         <Draggable key={task.id} draggableId={task.id} index={index}>
-                          {(provided) => (
-                            <div className="bg-zinc-400 p-4 rounded-lg mt-2" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                          {(provided, snapshot) => (
+                            <div
+                              className={`bg-gray-500 p-4 rounded-lg mt-2 draggable ${snapshot.isDragging ? "is-dragging" : ""}`}
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                            >
                               <h4>{task.title}</h4>
                               <p>{task.description}</p>
                               <p>Due: {task.dueDate}</p>
