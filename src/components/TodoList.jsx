@@ -13,7 +13,6 @@ const TodoList = () => {
   const [newListName, setNewListName] = useState("");
   const [newTask, setNewTask] = useState({ title: "", description: "", dueDate: "", priority: "", listId: "" });
   const navigate = useNavigate();
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
@@ -69,120 +68,99 @@ const TodoList = () => {
     await deleteDoc(doc(db, "tasks", taskId));
   };
 
-  const onDragEnd = async (result) => {
+  const onDragEnd = (result) => {
     const { destination, source, draggableId } = result;
 
     if (!destination) return;
 
-    if (["low", "medium", "high"].includes(destination.droppableId)) {
-      // Update priority
-      const newPriority = destination.droppableId.charAt(0).toUpperCase() + destination.droppableId.slice(1);
-      await updateDoc(doc(db, "tasks", draggableId), { priority: newPriority });
-    } else {
-      const updatedTasks = Array.from(tasks);
-      const [movedTask] = updatedTasks.splice(source.index, 1);
-      movedTask.listId = destination.droppableId;
-      updatedTasks.splice(destination.index, 0, movedTask);
+    const updatedTasks = Array.from(tasks);
+    const [movedTask] = updatedTasks.splice(source.index, 1);
+    movedTask.listId = destination.droppableId;
+    updatedTasks.splice(destination.index, 0, movedTask);
 
-      setTasks(updatedTasks);
-      await updateDoc(doc(db, "tasks", draggableId), { listId: destination.droppableId });
-    }
+    setTasks(updatedTasks);
+    updateDoc(doc(db, "tasks", draggableId), { listId: destination.droppableId });
   };
 
   return (
     <div className="flex justify-center">
       <div className="bg-zinc-800 p-4 rounded-lg">
-        <h2 className="text-2xl mb-4">To-Do Lists</h2>
-        <input
-          className="my-4 text-zinc-900 mx-6 py-1 rounded-md px-2"
-          type="text"
-          value={newListName}
-          onChange={(e) => setNewListName(e.target.value)}
-          placeholder="New List Name"
-        />
-        <button onClick={addList}>Add List</button>
-        <button className="translate-x-8 bg-red-900" onClick={logOut}>Logout</button>
+      <h2 className="text-2xl mb-4">To-Do Lists</h2>
+      <input
+        className="my-4 text-zinc-900 mx-6 py-1 rounded-md px-2"
+        type="text"
+        value={newListName}
+        onChange={(e) => setNewListName(e.target.value)}
+        placeholder="New List Name"
+      />
+      <button onClick={addList}>Add List</button>
+      <button className="translate-x-8 bg-red-900" onClick={logOut}>Logout</button>
 
-        <div className="flex justify-around mt-4">
-          {["Low", "Medium", "High"].map((priority) => (
-            <Droppable key={priority.toLowerCase()} droppableId={priority.toLowerCase()}>
-              {(provided) => (
-                <div
-                  className={`bg-${priority === "Low" ? "green" : priority === "Medium" ? "yellow" : "red"}-500 p-4 rounded-lg w-32 text-center`}
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
+      <DragDropContext onDragEnd={onDragEnd}>
+      <div className="flex">
+        {lists.map(list => (
+          <Droppable key={list.id} droppableId={list.id}>
+            {(provided) => (
+              <div className="bg-zinc-600 p-4 rounded-lg m-2" ref={provided.innerRef} {...provided.droppableProps}>
+                <h3 className="text-xl mb-2">{list.name}</h3>
+                <input
+                  className="my-2 text-zinc-900 py-1 rounded-md px-2"
+                  type="text"
+                  required
+                  value={newTask.title}
+                  onChange={(e) => setNewTask({ ...newTask, title: e.target.value, listId: list.id })}
+                  placeholder="Task Title"
+                />
+                <input
+                  className="my-2 text-zinc-900 py-1 rounded-md px-2"
+                  type="text"
+                  required
+                  value={newTask.description}
+                  onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                  placeholder="Task Description"
+                />
+                <input
+                  className="my-2 text-zinc-900 py-1 rounded-md px-2"
+                  type="date"
+                  required
+                  value={newTask.dueDate}
+                  onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                />
+                <select
+                  className="my-2 text-zinc-900 py-1 rounded-md px-2"
+                  value={newTask.priority}
+                  onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
                 >
-                  {priority} Priority
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          ))}
-        </div>
+                  <option value="">-Select-</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+                <button onClick={addTask} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Add Task</button>
+                {tasks
+                  .filter(task => task.listId === list.id)
+                  .map((task, index) => (
+                    <Draggable key={task.id} draggableId={task.id} index={index}>
+                      {(provided) => (
 
-        <DragDropContext onDragEnd={onDragEnd}>
-          <div className="flex">
-            {lists.map(list => (
-              <Droppable key={list.id} droppableId={list.id}>
-                {(provided) => (
-                  <div className="bg-zinc-600 p-4 rounded-lg m-2" ref={provided.innerRef} {...provided.droppableProps}>
-                    <h3 className="text-xl mb-2">{list.name}</h3>
-                    <input
-                      className="my-2 text-zinc-900 py-1 rounded-md px-2"
-                      type="text"
-                      required
-                      value={newTask.title}
-                      onChange={(e) => setNewTask({ ...newTask, title: e.target.value, listId: list.id })}
-                      placeholder="Task Title"
-                    />
-                    <input
-                      className="my-2 text-zinc-900 py-1 rounded-md px-2"
-                      type="text"
-                      required
-                      value={newTask.description}
-                      onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                      placeholder="Task Description"
-                    />
-                    <input
-                      className="my-2 text-zinc-900 py-1 rounded-md px-2"
-                      type="date"
-                      required
-                      value={newTask.dueDate}
-                      onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-                    />
-                    <select
-                      className="my-2 text-zinc-900 py-1 rounded-md px-2"
-                      value={newTask.priority}
-                      onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
-                    >
-                      <option value="">-Select-</option>
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                    </select>
-                    <button onClick={addTask} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Add Task</button>
-                    {tasks
-                      .filter(task => task.listId === list.id)
-                      .map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id} index={index}>
-                          {(provided) => (
-                            <div className="bg-zinc-400 p-4 rounded-lg mt-2" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-                              <h4>{task.title}</h4>
-                              <p>{task.description}</p>
-                              <p>Due: {task.dueDate}</p>
-                              <p>Priority: {task.priority}</p>
-                              <button onClick={() => deleteTask(task.id)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete Task</button>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            ))}
-          </div>
-        </DragDropContext>
+                        <div className="bg-zinc-400 p-4 rounded-lg mt-2" ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                          <h4>{task.title}</h4>
+                          <p>{task.description}</p>
+                          <p>Due: {task.dueDate}</p>
+                          <p>Priority: {task.priority}</p>
+                          <button onClick={() => deleteTask(task.id)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete Task</button>
+                        </div>
+
+                      )}
+                    </Draggable>
+                  ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        ))}
+        </div>
+      </DragDropContext>
       </div>
     </div>
   );
